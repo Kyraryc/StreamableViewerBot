@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -145,6 +145,7 @@ namespace StreamableViewerBot
                 sw.Close();
             }
             txtStatus.Text = "Finished";
+            MessageBox.Show("Kyr's bot is finished");
 
         }
         public void checklink(int x)
@@ -204,8 +205,17 @@ namespace StreamableViewerBot
 
             try
             {
-                webpage = webpage.Substring(webpage.IndexOf("<h2 class"));
-                int indexing = webpage.ToLower().IndexOf("what are your thoughts? log in or sign up");
+                int indexing = webpage.IndexOf("<h2 class");
+                if (indexing != -1)
+                {
+                    webpage = webpage.Substring(indexing);
+                }               
+                else
+                {
+                    checkPostNSFW(url);
+                    return;
+                }
+                indexing = webpage.ToLower().IndexOf("what are your thoughts? log in or sign up");
                 if (indexing == -1)
                 {
                     indexing = webpage.ToLower().IndexOf("commentSort--sortpicker");
@@ -291,6 +301,125 @@ namespace StreamableViewerBot
                     }
                 }
                 
+                if (!working)
+                {
+                    output.WriteLine("LINK: " + vidurl + ", FULL TEXT: " + link);
+                }
+
+                try
+                {
+                    webpage = webpage.Substring(link.Length);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+
+            int blar = 8;
+        }
+        public void checkPostNSFW(String url)
+        {
+            output.WriteLine("~~~NSFW Thread (maybe) detected, count and results may be off.  For best results, temporarily turn off NSFW/Spoilers~~~");
+            WebClient client = new WebClient();
+            string webpage = client.DownloadString(url);
+            try
+            {
+                int indexing = webpage.IndexOf("<title");
+                if (indexing != -1)
+                {
+                    webpage = webpage.Substring(indexing);
+                }
+                else
+                {
+                    return;
+                }
+                indexing = webpage.ToLower().IndexOf("what are your thoughts? log in or sign up");
+                if (indexing == -1)
+                {
+                    indexing = webpage.ToLower().IndexOf("commentSort--sortpicker");
+                    if (indexing == -1)
+                    {
+                        indexing = webpage.ToLower().IndexOf("commentsignupbar");
+                        if (indexing == -1)
+                        {
+                            indexing = webpage.ToLower().IndexOf("link-save-button");
+                            if (indexing == -1)
+                            {
+                                indexing = webpage.Length - 10;
+                            }
+                        }
+                    }
+                }//
+                webpage = webpage.Substring(0, indexing);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            //href=\"https://imgur.com/a/0Eiow\">barely able to avoid a direct hit</a>
+            while (webpage.IndexOf("href=\\\"") != -1)
+            {//\\n\\n*
+                String link;
+                try
+                {
+                    webpage = webpage.Substring(webpage.IndexOf("href=\\\""));
+                    link = webpage.Substring(1, webpage.IndexOf("\\u003C/a"));
+                    inttotal++;
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+
+                //"href=\"https://streamable.com/i2m7p\">melt cars<"
+                string vidurl = "";
+
+                try
+                { //"href=\"https://streamable.com/4kudv\" title=\"Parasites Lost\">Correctly identifies sinus anatomy<"
+                    vidurl = link.Substring(link.IndexOf("\"") + 1);
+                    vidurl = vidurl.Substring(0, vidurl.IndexOf("\\"));
+                    if (vidurl.Contains("\" title="))
+                    {
+                        vidurl = vidurl.Substring(0, vidurl.IndexOf("\" title="));
+                    }
+                    if (makelist != "" && vidurl.Contains(makelist))
+                    {
+                        if (!alllinks.Contains(vidurl))
+                        {
+                            alllinks.Add(vidurl);
+                            alllinksource.Add(url.Substring(56));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                bool working = false;
+                try
+                {
+                    working = CheckVidImage(vidurl);
+                }
+                catch (Exception ex)
+                {
+                    ie = null;
+                    Thread.Sleep(1500);
+
+                    ie = new SHDocVw.InternetExplorer();
+                    ie.Visible = true;
+                    ie.Navigate2("www.streamable.com");
+                    try
+                    {
+                        working = CheckVidImage(vidurl);
+                    }
+                    catch (Exception exx)
+                    {
+                        throw exx;
+                    }
+                }
+
                 if (!working)
                 {
                     output.WriteLine("LINK: " + vidurl + ", FULL TEXT: " + link);
