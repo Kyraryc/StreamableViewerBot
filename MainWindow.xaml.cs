@@ -16,6 +16,7 @@ using System.IO;
 using System.Collections;
 using System.Net;
 using System.Threading;
+using System.Diagnostics;
 
 namespace StreamableViewerBot
 {
@@ -37,6 +38,7 @@ namespace StreamableViewerBot
         bool time;
         int cur = 0;
         bool threadmode;
+        bool submode = false;
         int intsubview = -1;
         string makelist = "";
         DateTime starttime;
@@ -55,6 +57,12 @@ namespace StreamableViewerBot
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             txtStatus.Text = "Working";
+            imagelinks.Clear();
+            vidlinks.Clear();
+            posts.Clear();
+            alllinks.Clear();
+            alllinksource.Clear();
+            sublinks.Clear();
             LoadConfig();
             int j = 0;
             try
@@ -144,6 +152,22 @@ namespace StreamableViewerBot
                 }
                 sw.Close();
             }
+            Process[] IEWindows = Process.GetProcessesByName("IEXPLORE");
+            for (int p = 0; p < IEWindows.Length; p++)
+            {
+                try
+                {
+                    Process curprocc = IEWindows[p];
+                    if (!curprocc.HasExited)
+                    {
+                        curprocc.Kill();
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
             txtStatus.Text = "Finished";
             MessageBox.Show("Kyr's bot is finished");
 
@@ -162,6 +186,22 @@ namespace StreamableViewerBot
             {
                 ie = null;
                 Thread.Sleep(1500);
+                Process[] IEWindows = Process.GetProcessesByName("IEXPLORE");
+                for (int p = 0; p < IEWindows.Length; p++)
+                {
+                    try
+                    {
+                        Process curprocc = IEWindows[p];
+                        if (!curprocc.HasExited)
+                        {
+                            curprocc.Kill();
+                        }
+                    }
+                    catch (Exception killex)
+                    {
+
+                    }
+                }
 
                 ie = new SHDocVw.InternetExplorer();
                 ie.Visible = true;
@@ -287,6 +327,22 @@ namespace StreamableViewerBot
                 {
                     ie = null;
                     Thread.Sleep(1500);
+                    Process[] IEWindows = Process.GetProcessesByName("IEXPLORE");
+                    for (int p = 0; p < IEWindows.Length; p++)
+                    {
+                        try
+                        {
+                            Process curprocc = IEWindows[p];
+                            if (!curprocc.HasExited)
+                            {
+                                curprocc.Kill();
+                            }
+                        }
+                        catch (Exception killex)
+                        {
+
+                        }
+                    }
 
                     ie = new SHDocVw.InternetExplorer();
                     ie.Visible = true;
@@ -406,6 +462,22 @@ namespace StreamableViewerBot
                 {
                     ie = null;
                     Thread.Sleep(1500);
+                    Process[] IEWindows = Process.GetProcessesByName("IEXPLORE");
+                    for (int p = 0; p < IEWindows.Length; p++)
+                    {
+                        try
+                        {
+                            Process curprocc = IEWindows[p];
+                            if (!curprocc.HasExited)
+                            {
+                                curprocc.Kill();
+                            }
+                        }
+                        catch (Exception killex)
+                        {
+
+                        }
+                    }
 
                     ie = new SHDocVw.InternetExplorer();
                     ie.Visible = true;
@@ -449,7 +521,12 @@ namespace StreamableViewerBot
             else
             {
                 threadmode = false;
+                if(io.Contains("Subview"))
+                {
+                    submode = true;
+                }
             }
+            
 
             io = sr.ReadLine();
             fullplay = Boolean.Parse(io.Substring(8));
@@ -498,7 +575,14 @@ namespace StreamableViewerBot
             }
             else
             {
-                sw.WriteLine("Mode Link");
+                if (submode)
+                {
+                    sw.WriteLine("Mode Subview");
+                }
+                else
+                {
+                    sw.WriteLine("Mode Link");
+                }
             }
             sw.WriteLine("Fullplay " + fullplay);
             sw.WriteLine("Loop " + loop);
@@ -527,7 +611,15 @@ namespace StreamableViewerBot
         }
         public void loadLinks()
         {
-            StreamReader sr = new StreamReader("links.txt");
+            StreamReader sr;
+            if (submode)
+            {
+                sr = new StreamReader("subviews.txt");
+            }
+            else
+            {
+                sr = new StreamReader("links.txt");
+            }
             while (!sr.EndOfStream)
             {
                 string line = sr.ReadLine();
@@ -542,6 +634,7 @@ namespace StreamableViewerBot
                     alllinksource.Add("N/A");
                 }
             }
+            sr.Close();
         }
         public bool CheckVidImage(String url)
         {
@@ -651,7 +744,7 @@ namespace StreamableViewerBot
                         string numviews = views.innerText.ToLower().Replace("views", "").Trim();
                         int intviews = int.Parse(numviews);
 
-                        if (intviews <= intsubview)
+                        if (intviews <= intsubview && !sublinks.Contains(url))
                         {
                             sublinks.Add(url);
                         }
